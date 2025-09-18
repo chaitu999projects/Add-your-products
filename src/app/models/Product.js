@@ -1,19 +1,25 @@
-const { default: mongoose } = require("mongoose");
+import mongoose from "mongoose";
 
-const ProductSchema = new mongoose.Schema({
+const ProductSchema = new mongoose.Schema(
+  {
     image: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     title: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     description: {
-        type: String,
-        required: true
-    }
-}, {timestamps:true})
+      type: String,
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
 
-const ProductModel = mongoose.models.Product || mongoose.model("Product", ProductSchema);
+// Prevent model overwrite upon hot reloads in development
+const ProductModel =
+  mongoose.models.Product || mongoose.model("Product", ProductSchema);
+
 export default ProductModel;

@@ -1,7 +1,9 @@
 import { DBConnection } from "../utils/lib/config/connection";
 import ProductModel from "../models/Product";
-import { writeFile } from "fs/promises";
-import path from "path";
+import cloudinary from "../utils/lib/cloudinary";
+
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
 
 export default function AddProds() {
   // server action
@@ -15,23 +17,29 @@ export default function AddProds() {
     const title = formData.get("title");
     const description = formData.get("description");
 
-    let imagePath = "";
+    let imageUrl = "";
 
     if (file && file.size > 0) {
       // Convert file to buffer
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      // Save file into public/uploads
-      const fileName = `${Date.now()}-${file.name}`;
-      const uploadDir = path.join(process.cwd(), "public", "uploads", fileName);
+      // Upload to Cloudinary
+      const uploadRes = await cloudinary.uploader.upload_stream(
+        { folder: "products" },
+        async (error, result) => {
+          if (error) {
+            throw new Error("Cloudinary upload failed: " + error.message);
+          }
+          imageUrl = result.secure_url;
+        }
+      );
 
-      await writeFile(uploadDir, buffer);
-
-      imagePath = `/uploads/${fileName}`; 
+      // pipe buffer into upload stream
+      uploadRes.end(buffer);
     }
 
-    await ProductModel.create({ image: imagePath, title, description });
+    await ProductModel.create({ image: imageUrl, title, description });
   };
 
   return (
@@ -47,7 +55,9 @@ export default function AddProds() {
           encType="multipart/form-data"
         >
           <label className="block">
-            <span className="text-[#3d3d3d] font-medium font-serif">Upload Image</span>
+            <span className="text-[#3d3d3d] font-medium font-serif">
+              Upload Image
+            </span>
             <input
               type="file"
               name="image"
@@ -69,7 +79,9 @@ export default function AddProds() {
           </label>
 
           <label className="block">
-            <span className="text-[#3d3d3d] font-medium font-serif">Description</span>
+            <span className="text-[#3d3d3d] font-medium font-serif">
+              Description
+            </span>
             <textarea
               name="description"
               placeholder="Enter product description"

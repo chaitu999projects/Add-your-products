@@ -1,7 +1,9 @@
 import { DBConnection } from "../utils/lib/config/connection";
 import ProductModel from "../models/Product";
 import Image from "next/image";
-export const dynamic = "force-dynamic";
+
+// Always fetch fresh data (no build-time prerender)
+export const revalidate = 0;
 
 const GetProd = async () => {
   await DBConnection();
@@ -22,7 +24,6 @@ const GetProd = async () => {
 
   return (
     <div className="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      {/* Header Section */}
       <div className="max-w-4xl mx-auto text-center mb-16">
         <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
           Product Collection
@@ -32,22 +33,20 @@ const GetProd = async () => {
         </p>
       </div>
 
-      {/* Products Grid */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {allProds.map((item) => (
           <div
             key={item._id.toString()}
             className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 transform hover:-translate-y-1"
           >
-            {/* Product Image */}
             <div className="relative h-64 w-full">
               {item.image ? (
                 <Image
                   src={item.image}
                   alt={item.title}
-                   width={400}
-                   height={256} 
-                  className="object-cover"
+                  width={400}
+                  height={256}
+                  className="object-cover w-full h-full"
                 />
               ) : (
                 <div className="w-full h-full bg-gray-700 flex items-center justify-center">
@@ -56,14 +55,9 @@ const GetProd = async () => {
               )}
             </div>
 
-            {/* Product Details */}
             <div className="p-5 flex flex-col h-full">
-              <h3 className="text-lg font-semibold text-white mb-2 truncate">
-                {item.title}
-              </h3>
-              <p className="text-gray-400 text-sm mb-4 line-clamp-2">
-                {item.description}
-              </p>
+              <h3 className="text-lg font-semibold text-white mb-2 truncate">{item.title}</h3>
+              <p className="text-gray-400 text-sm mb-4 line-clamp-2">{item.description}</p>
 
               <button className="mt-auto w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors duration-300">
                 View Details
