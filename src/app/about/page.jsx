@@ -9,7 +9,8 @@ const AboutPage = () => {
         <Image
           src="https://i.pinimg.com/736x/0a/bf/9e/0abf9e5c732b4dcd1f8bf0ab0f9a0f37.jpg" // add your resin art image in public/images
           alt="Resin Art Banner"
-          fill
+          width={400}
+          height={256} // ~16:10 ratio for h-64
           className="object-cover brightness-90"
           priority
         />

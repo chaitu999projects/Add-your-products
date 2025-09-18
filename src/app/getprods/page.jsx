@@ -1,6 +1,7 @@
 import { DBConnection } from "../utils/lib/config/connection";
 import ProductModel from "../models/Product";
 import Image from "next/image";
+export const dynamic = "force-dynamic";
 
 const GetProd = async () => {
   await DBConnection();
@@ -44,7 +45,8 @@ const GetProd = async () => {
                 <Image
                   src={item.image}
                   alt={item.title}
-                  fill
+                   width={400}
+                   height={256} 
                   className="object-cover"
                 />
               ) : (
