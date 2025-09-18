@@ -1,6 +1,7 @@
 import { DBConnection } from "../utils/lib/config/connection";
 import ProductModel from "../models/Product";
 import Image from "next/image";
+import Link from "next/link";
 
 // Always fetch fresh data (no build-time prerender)
 export const revalidate = 0;
@@ -9,10 +10,16 @@ const GetProd = async () => {
   await DBConnection();
 
   let allProds = [];
-  let loading = false;
   
   try {
-    allProds = await ProductModel.find({}).lean();
+    allProds = await ProductModel.find({}).sort({ createdAt: -1 }).lean();
+    
+    // Convert MongoDB objects to plain objects for Next.js
+    allProds = allProds.map(product => ({
+      ...product,
+      _id: product._id.toString(),
+      createdAt: product.createdAt ? new Date(product.createdAt).toLocaleDateString() : 'Unknown date'
+    }));
   } catch (error) {
     console.error("Database error:", error);
     return (
@@ -33,12 +40,12 @@ const GetProd = async () => {
           <div className="text-blue-400 text-5xl mb-4 animate-pulse">✨</div>
           <h2 className="text-2xl font-bold text-white mb-2">No products found</h2>
           <p className="text-gray-400 mb-6">Be the first to add a product to our collection</p>
-          <a 
-            href="/add-products" 
+          <Link 
+            href="/addprods" 
             className="inline-block bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 transform hover:scale-105"
           >
             Add Product
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -56,15 +63,15 @@ const GetProd = async () => {
             Discover our curated selection of premium products
           </p>
           <div className="mt-8 flex justify-center gap-4">
-            <a 
-              href="/add-products" 
+            <Link
+              href="/addprods" 
               className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 flex items-center"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
               </svg>
               Add New Product
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -76,15 +83,28 @@ const GetProd = async () => {
           </div>
           <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
             <div className="text-3xl font-bold text-purple-400 mb-2">
-              {allProds.filter(p => p.image).length}
+              {allProds.filter(p => p.image && p.image.includes('cloudinary')).length}
             </div>
             <div className="text-gray-400">Products with Images</div>
           </div>
           <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
             <div className="text-3xl font-bold text-green-400 mb-2">
-              {new Set(allProds.map(p => p.category)).size}
+              {new Set(allProds.map(p => p.category || 'Uncategorized')).size}
             </div>
             <div className="text-gray-400">Categories</div>
+          </div>
+        </div>
+
+        {/* Debug Info (remove in production) */}
+        <div className="mb-8 p-4 bg-yellow-900/30 border border-yellow-700 rounded-lg">
+          <h3 className="text-yellow-400 font-medium mb-2">Debug Info ({allProds.length} products loaded)</h3>
+          <div className="text-yellow-200 text-sm">
+            {allProds.map((p, i) => (
+              <div key={i} className="mb-1">
+                #{i+1}: {p.title} - {p.image ? 'Has image' : 'No image'}
+                {p.image && p.image.includes('cloudinary') && ' (Cloudinary)'}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -92,18 +112,30 @@ const GetProd = async () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {allProds.map((item) => (
             <div
-              key={item._id.toString()}
+              key={item._id}
               className="group bg-gray-800/70 backdrop-blur-sm rounded-2xl overflow-hidden border border-gray-700 hover:border-blue-500 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 transform hover:-translate-y-2"
             >
               <div className="relative h-64 w-full overflow-hidden">
-                {item.image ? (
-                  <Image
-                    src={item.image}
-                    alt={item.title}
-                    width={400}
-                    height={256}
-                    className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700"
-                  />
+                {item.image && item.image.includes('cloudinary') ? (
+                  <>
+                    {/* Cloudinary Image */}
+                    <Image
+                      src={item.image}
+                      alt={item.title || 'Product image'}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700"
+                      onError={(e) => {
+                        // Fallback if image fails to load
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                    {/* Fallback in case image fails to load */}
+                    <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center ">
+                      <span className="text-gray-500 text-sm">Image failed to load</span>
+                    </div>
+                  </>
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
                     <span className="text-gray-500 text-sm">No image available</span>
@@ -114,13 +146,15 @@ const GetProd = async () => {
 
               <div className="p-6 flex flex-col">
                 <h3 className="text-xl font-semibold text-white mb-2 line-clamp-1 group-hover:text-blue-300 transition-colors">
-                  {item.title}
+                  {item.title || 'Untitled Product'}
                 </h3>
-                <p className="text-gray-400 text-sm mb-4 line-clamp-2">{item.description}</p>
+                <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                  {item.description || 'No description available'}
+                </p>
                 
                 <div className="mt-4 flex items-center justify-between">
                   <span className="text-xs text-gray-500">
-                    Added: {new Date(item.createdAt || Date.now()).toLocaleDateString()}
+                    Added: {item.createdAt || 'Unknown date'}
                   </span>
                 </div>
 
@@ -137,11 +171,6 @@ const GetProd = async () => {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Footer */}
-        <div className="mt-16 text-center text-gray-500 text-sm">
-          <p>Showing {allProds.length} product{allProds.length !== 1 ? 's' : ''}</p>
         </div>
       </div>
     </div>
