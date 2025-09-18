@@ -72,13 +72,6 @@ const GetProd = async () => {
           </div>
         ))}
       </div>
-
-      {/* Footer Note */}
-      <div className="max-w-4xl mx-auto mt-16 text-center pt-8 border-t border-gray-800">
-        <p className="text-gray-400 text-sm sm:text-base">
-          © {new Date().getFullYear()} Your Brand Name
-        </p>
-      </div>
     </div>
   );
 };

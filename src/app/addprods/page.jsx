@@ -28,7 +28,7 @@ export default function AddProds() {
 
       await writeFile(uploadDir, buffer);
 
-      imagePath = `/uploads/${fileName}`; // accessible via public/uploads
+      imagePath = `/uploads/${fileName}`; 
     }
 
     await ProductModel.create({ image: imagePath, title, description });
