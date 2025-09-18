@@ -100,8 +100,8 @@ const GetProd = async () => {
                   <Image
                     src={item.image}
                     alt={item.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    width={400}
+                    height={256}
                     className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700"
                   />
                 ) : (
