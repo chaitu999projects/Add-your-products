@@ -24,22 +24,34 @@ export default function AddProds() {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      // Upload to Cloudinary
-      const uploadRes = await cloudinary.uploader.upload_stream(
-        { folder: "products" },
-        async (error, result) => {
-          if (error) {
-            throw new Error("Cloudinary upload failed: " + error.message);
-          }
-          imageUrl = result.secure_url;
-        }
-      );
-
-      // pipe buffer into upload stream
-      uploadRes.end(buffer);
+      // Upload to Cloudinary using promise-based approach
+      try {
+        imageUrl = await new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: "products" },
+            (error, result) => {
+              if (error) {
+                reject(new Error("Cloudinary upload failed: " + error.message));
+              } else {
+                resolve(result.secure_url);
+              }
+            }
+          );
+          
+          // Pipe buffer into upload stream
+          uploadStream.end(buffer);
+        });
+      } catch (error) {
+        console.error("Upload error:", error);
+        throw error;
+      }
     }
 
+    // Create product with the image URL
     await ProductModel.create({ image: imageUrl, title, description });
+    
+    // Return success message
+    return { success: true, message: "Product added successfully!" };
   };
 
   return (
