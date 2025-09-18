@@ -8,63 +8,141 @@ export const revalidate = 0;
 const GetProd = async () => {
   await DBConnection();
 
-  const allProds = await ProductModel.find({}).lean();
+  let allProds = [];
+  let loading = false;
+  
+  try {
+    allProds = await ProductModel.find({}).lean();
+  } catch (error) {
+    console.error("Database error:", error);
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+        <div className="text-center p-8 rounded-lg bg-gray-800 border border-red-500 max-w-md">
+          <div className="text-red-400 text-4xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-red-300 mb-2">Database Error</h2>
+          <p className="text-gray-300">Failed to load products. Please try again later.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!allProds || allProds.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-        <div className="text-center p-8 rounded-lg bg-gray-800 border border-gray-700 max-w-md">
-          <div className="text-blue-400 text-4xl mb-4">✨</div>
-          <p className="text-xl text-gray-200">No products found.</p>
-          <p className="text-gray-400 mt-2">Check back soon for new arrivals</p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
+        <div className="text-center p-8 rounded-2xl bg-gray-800/70 backdrop-blur-md border border-gray-700 max-w-md shadow-2xl">
+          <div className="text-blue-400 text-5xl mb-4 animate-pulse">✨</div>
+          <h2 className="text-2xl font-bold text-white mb-2">No products found</h2>
+          <p className="text-gray-400 mb-6">Be the first to add a product to our collection</p>
+          <a 
+            href="/add-products" 
+            className="inline-block bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 transform hover:scale-105"
+          >
+            Add Product
+          </a>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto text-center mb-16">
-        <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
-          Product Collection
-        </h1>
-        <p className="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">
-          Discover our curated selection of premium products
-        </p>
-      </div>
-
-      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {allProds.map((item) => (
-          <div
-            key={item._id.toString()}
-            className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 transform hover:-translate-y-1"
-          >
-            <div className="relative h-64 w-full">
-              {item.image ? (
-                <Image
-                  src={item.image}
-                  alt={item.title}
-                  width={400}
-                  height={256}
-                  className="object-cover w-full h-full"
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-700 flex items-center justify-center">
-                  <span className="text-gray-500">No image</span>
-                </div>
-              )}
-            </div>
-
-            <div className="p-5 flex flex-col h-full">
-              <h3 className="text-lg font-semibold text-white mb-2 truncate">{item.title}</h3>
-              <p className="text-gray-400 text-sm mb-4 line-clamp-2">{item.description}</p>
-
-              <button className="mt-auto w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors duration-300">
-                View Details
-              </button>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text">
+            Product Collection
+          </h1>
+          <p className="text-gray-400 max-w-2xl mx-auto text-lg">
+            Discover our curated selection of premium products
+          </p>
+          <div className="mt-8 flex justify-center gap-4">
+            <a 
+              href="/add-products" 
+              className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 flex items-center"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+              Add New Product
+            </a>
           </div>
-        ))}
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+            <div className="text-3xl font-bold text-blue-400 mb-2">{allProds.length}</div>
+            <div className="text-gray-400">Total Products</div>
+          </div>
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+            <div className="text-3xl font-bold text-purple-400 mb-2">
+              {allProds.filter(p => p.image).length}
+            </div>
+            <div className="text-gray-400">Products with Images</div>
+          </div>
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+            <div className="text-3xl font-bold text-green-400 mb-2">
+              {new Set(allProds.map(p => p.category)).size}
+            </div>
+            <div className="text-gray-400">Categories</div>
+          </div>
+        </div>
+
+        {/* Products Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {allProds.map((item) => (
+            <div
+              key={item._id.toString()}
+              className="group bg-gray-800/70 backdrop-blur-sm rounded-2xl overflow-hidden border border-gray-700 hover:border-blue-500 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 transform hover:-translate-y-2"
+            >
+              <div className="relative h-64 w-full overflow-hidden">
+                {item.image ? (
+                  <Image
+                    src={item.image}
+                    alt={item.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
+                    <span className="text-gray-500 text-sm">No image available</span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              </div>
+
+              <div className="p-6 flex flex-col">
+                <h3 className="text-xl font-semibold text-white mb-2 line-clamp-1 group-hover:text-blue-300 transition-colors">
+                  {item.title}
+                </h3>
+                <p className="text-gray-400 text-sm mb-4 line-clamp-2">{item.description}</p>
+                
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-xs text-gray-500">
+                    Added: {new Date(item.createdAt || Date.now()).toLocaleDateString()}
+                  </span>
+                </div>
+
+                <div className="mt-6 flex gap-3">
+                  <button className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 text-sm font-medium">
+                    View Details
+                  </button>
+                  <button className="w-10 h-10 flex items-center justify-center bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors duration-300">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-16 text-center text-gray-500 text-sm">
+          <p>Showing {allProds.length} product{allProds.length !== 1 ? 's' : ''}</p>
+        </div>
       </div>
     </div>
   );
